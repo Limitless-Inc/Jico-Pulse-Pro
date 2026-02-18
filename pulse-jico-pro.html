@@ -1,0 +1,2992 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Pulse Jico · Professional Healthcare System</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        :root {
+            --p900: #001b3a;
+            --p800: #002b5c;
+            --p700: #003c7a;
+            --p600: #004c97;
+            --p500: #1a5fa0;
+            --p400: #4a7fb0;
+            --p300: #7a9fc0;
+            --a700: #1a4d2e;
+            --a600: #1f5e3a;
+            --a500: #2e8b57;
+            --w700: #b34a00;
+            --d700: #c02f2f;
+            --n100: #f8fafc;
+            --n200: #eef2f6;
+            --n300: #e2e8f0;
+            --n400: #cbd5e1;
+            --n500: #94a3b8;
+            --n600: #64748b;
+            --n700: #475569;
+            --n800: #334155;
+            --n900: #1e293b;
+            --bg: linear-gradient(155deg, #f0f5fa 0%, #e3ecf5 100%);
+            --card: rgba(255, 255, 255, 0.92);
+            --border: rgba(255, 255, 255, 0.9);
+            --sh-sm: 0 2px 8px rgba(0, 20, 40, 0.06);
+            --sh-md: 0 8px 24px rgba(0, 20, 40, 0.1);
+            --sh-lg: 0 20px 40px -10px rgba(0, 30, 60, 0.15);
+            --radius-sm: 0.75rem;
+            --radius-md: 1.2rem;
+            --radius-lg: 1.8rem;
+            --radius-xl: 2rem;
+            --radius-pill: 60px;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 1rem;
+            color: var(--n800);
+        }
+
+        body.dark {
+            --bg: linear-gradient(155deg, #0d1520 0%, #080f1a 100%);
+            --card: rgba(22, 32, 48, 0.95);
+            --border: rgba(60, 80, 110, 0.3);
+            color: var(--n200);
+        }
+
+        /* ===== PIN LOCK ===== */
+        #pinOverlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #001b3a, #003c7a, #1f5e3a);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .pin-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem 2rem;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .pin-logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pin-box h2 {
+            color: #fff;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .pin-box p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-dots {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s;
+        }
+
+        .pin-dot.filled {
+            background: #4fd1c5;
+            border-color: #4fd1c5;
+            box-shadow: 0 0 10px rgba(79, 209, 197, 0.5);
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.7rem;
+            margin-bottom: 1rem;
+        }
+
+        .pin-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .pin-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .pin-btn:active {
+            transform: scale(0.95);
+        }
+
+        .pin-error {
+            color: #fc8181;
+            font-size: 0.85rem;
+            min-height: 1.2rem;
+            margin-top: 0.5rem;
+        }
+
+        .pin-hint {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        /* ===== TOAST ===== */
+        #toastContainer {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 8000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #fff;
+            border-radius: var(--radius-md);
+            padding: 0.9rem 1.2rem;
+            box-shadow: var(--sh-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            min-width: 260px;
+            max-width: 360px;
+            pointer-events: all;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--p600);
+        }
+
+        .toast.success {
+            border-color: var(--a500);
+        }
+
+        .toast.error {
+            border-color: var(--d700);
+        }
+
+        .toast.warning {
+            border-color: var(--w700);
+        }
+
+        .toast.info {
+            border-color: var(--p600);
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast.success i {
+            color: var(--a500);
+        }
+
+        .toast.error i {
+            color: var(--d700);
+        }
+
+        .toast.warning i {
+            color: var(--w700);
+        }
+
+        .toast.info i {
+            color: var(--p600);
+        }
+
+        .toast span {
+            flex: 1;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--n800);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--n500);
+            font-size: 1rem;
+            padding: 0;
+        }
+
+        .toast.hide {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        body.dark .toast {
+            background: var(--n800);
+        }
+
+        body.dark .toast span {
+            color: var(--n200);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
+        /* ===== CONFIRM DIALOG ===== */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 7000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+        }
+
+        .confirm-box {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: var(--sh-lg);
+            text-align: center;
+        }
+
+        body.dark .confirm-box {
+            background: var(--n800);
+        }
+
+        .confirm-box .confirm-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .confirm-box h3 {
+            font-size: 1.2rem;
+            color: var(--n900);
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark .confirm-box h3 {
+            color: var(--n100);
+        }
+
+        .confirm-box p {
+            color: var(--n600);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .confirm-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-cancel-c {
+            background: var(--n200);
+            color: var(--n700);
+            border: none;
+            border-radius: var(--radius-pill);
+            padding: 0.7rem 1.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-confirm-c {
+            background: var(--d700);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-pill);
+            padding: 0.7rem 1.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        body.dark .btn-cancel-c {
+            background: var(--n700);
+            color: var(--n200);
+        }
+
+        /* ===== SPINNER ===== */
+        #spinnerOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(3px);
+            z-index: 6000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #spinnerOverlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== APP CONTAINER ===== */
+        .app {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--sh-lg), 0 0 0 1px var(--border) inset;
+            padding: 1.5rem;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--p700), var(--p500));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 76, 151, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--p800);
+            line-height: 1.2;
+        }
+
+        body.dark .logo-text h1 {
+            color: var(--n100);
+        }
+
+        .logo-badge {
+            background: var(--n200);
+            padding: 0.2rem 1rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--p600);
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        body.dark .logo-badge {
+            background: var(--n800);
+            color: var(--n300);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 0.7rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-theme {
+            background: var(--n200);
+            border: none;
+            border-radius: var(--radius-pill);
+            padding: 0.5rem 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--n700);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        body.dark .btn-theme {
+            background: var(--n800);
+            color: var(--n200);
+        }
+
+        .sys-status {
+            background: var(--a600);
+            color: #fff;
+            padding: 0.5rem 1.2rem;
+            border-radius: var(--radius-pill);
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4fd1c5;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ===== NAV TABS ===== */
+        .nav-tabs {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: nowrap;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--n300);
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        body.dark .nav-tabs {
+            border-color: var(--n700);
+        }
+
+        .nav-tab {
+            padding: 0.7rem 1.4rem;
+            border: none;
+            background: transparent;
+            color: var(--n600);
+            font-weight: 600;
+            border-radius: var(--radius-pill) var(--radius-pill) 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-size: 0.88rem;
+        }
+
+        .nav-tab i {
+            margin-right: 6px;
+        }
+
+        .nav-tab:hover {
+            color: var(--p600);
+            background: rgba(0, 76, 151, 0.06);
+        }
+
+        .nav-tab.active {
+            background: #fff;
+            color: var(--p700);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        body.dark .nav-tab {
+            color: var(--n400);
+        }
+
+        body.dark .nav-tab.active {
+            background: var(--n800);
+            color: var(--n100);
+        }
+
+        .nav-tab.active i {
+            color: var(--p500);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeUp 0.25s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0.4;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== STATS GRID ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--sh-sm);
+            border: 1px solid var(--n200);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sh-md);
+        }
+
+        body.dark .stat-card {
+            background: var(--n800);
+            border-color: var(--n700);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .stat-info h3 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--n900);
+        }
+
+        .stat-info p {
+            color: var(--n600);
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+
+        body.dark .stat-info h3 {
+            color: var(--n100);
+        }
+
+        /* ===== DASHBOARD LAYOUT ===== */
+        .dash-layout {
+            display: grid;
+            grid-template-columns: 1.1fr 2fr;
+            gap: 1.2rem;
+        }
+
+        @media(max-width:1100px) {
+            .dash-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== PANELS ===== */
+        .panel {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.4rem;
+            border: 1px solid var(--n200);
+            box-shadow: var(--sh-sm);
+        }
+
+        body.dark .panel {
+            background: var(--n800);
+            border-color: var(--n700);
+        }
+
+        .panel-title {
+            font-size: 1.05rem;
+            color: var(--n800);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        body.dark .panel-title {
+            color: var(--n200);
+        }
+
+        .panel-title i {
+            color: var(--p600);
+        }
+
+        /* ===== FORMS ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.8rem;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--n600);
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--n200);
+            border-radius: var(--radius-pill);
+            font-size: 0.88rem;
+            background: var(--n100);
+            transition: all 0.2s;
+            color: var(--n800);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--p500);
+            box-shadow: 0 0 0 3px rgba(0, 76, 151, 0.1);
+            background: #fff;
+        }
+
+        .form-control.error {
+            border-color: var(--d700);
+        }
+
+        .field-error {
+            color: var(--d700);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .field-error.show {
+            display: block;
+        }
+
+        textarea.form-control {
+            border-radius: var(--radius-md);
+            resize: vertical;
+            min-height: 72px;
+        }
+
+        body.dark .form-control {
+            background: var(--n900);
+            border-color: var(--n700);
+            color: var(--n200);
+        }
+
+        body.dark .form-control:focus {
+            background: var(--n800);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            border: none;
+            border-radius: var(--radius-pill);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88rem;
+        }
+
+        .btn-primary {
+            background: var(--p600);
+            color: #fff;
+            padding: 0.85rem 1.5rem;
+            width: 100%;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--p700);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -8px var(--p600);
+        }
+
+        .btn-success {
+            background: var(--a600);
+            color: #fff;
+            padding: 0.7rem 1.3rem;
+        }
+
+        .btn-success:hover {
+            background: var(--a700);
+        }
+
+        .btn-danger {
+            background: var(--d700);
+            color: #fff;
+            padding: 0.7rem 1.3rem;
+        }
+
+        .btn-secondary {
+            background: var(--n200);
+            color: var(--n700);
+            padding: 0.7rem 1.3rem;
+        }
+
+        body.dark .btn-secondary {
+            background: var(--n700);
+            color: var(--n200);
+        }
+
+        .btn-lookup {
+            background: var(--p600);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-pill);
+            padding: 0.7rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.9rem;
+            font-size: 0.8rem;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        /* ===== STUDENT LOOKUP ===== */
+        .student-lookup {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .student-lookup input {
+            flex: 1;
+        }
+
+        /* ===== MEDICATION ROWS ===== */
+        .drug-entry {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            background: var(--n100);
+            padding: 0.7rem;
+            border-radius: var(--radius-pill);
+            margin-bottom: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        body.dark .drug-entry {
+            background: var(--n900);
+        }
+
+        .drug-name {
+            flex: 2;
+            min-width: 110px;
+        }
+
+        .drug-dosage {
+            flex: 1;
+            min-width: 75px;
+        }
+
+        .drug-dur {
+            width: 72px;
+        }
+
+        .drug-times {
+            width: 65px;
+        }
+
+        .btn-rm-drug {
+            background: none;
+            border: none;
+            color: var(--d700);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .btn-add-drug {
+            background: var(--n200);
+            border: 1px dashed var(--p400);
+            border-radius: var(--radius-pill);
+            padding: 0.5rem 1rem;
+            color: var(--p600);
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        body.dark .btn-add-drug {
+            background: var(--n800);
+        }
+
+        /* ===== REFERRAL ===== */
+        .referral-section {
+            background: var(--n100);
+            border-radius: var(--radius-md);
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+        }
+
+        body.dark .referral-section {
+            background: var(--n900);
+        }
+
+        .referral-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .referral-details {
+            display: none;
+            margin-top: 0.8rem;
+        }
+
+        .referral-details.open {
+            display: block;
+        }
+
+        /* ===== PATIENT LIST ===== */
+        .patient-list-wrap {
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .patient-item {
+            background: var(--n100);
+            border-radius: var(--radius-md);
+            padding: 0.9rem 1rem;
+            margin-bottom: 0.4rem;
+            border: 1px solid var(--n200);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark .patient-item {
+            background: var(--n900);
+            border-color: var(--n700);
+        }
+
+        .patient-item:hover {
+            transform: translateX(4px);
+            border-color: var(--p400);
+        }
+
+        .patient-item.selected {
+            background: #fff;
+            border-left: 4px solid var(--p600);
+        }
+
+        body.dark .patient-item.selected {
+            background: var(--n800);
+        }
+
+        .patient-item .p-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .patient-item .p-sub {
+            font-size: 0.78rem;
+            color: var(--n500);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.8rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(255, 193, 7, 0.15);
+            color: #b38f00;
+        }
+
+        .status-completed {
+            background: rgba(46, 139, 87, 0.15);
+            color: var(--a600);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--n500);
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* ===== PATIENT DETAIL ===== */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media(max-width:600px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-field {
+            font-size: 0.88rem;
+        }
+
+        .detail-field strong {
+            color: var(--n600);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .detail-field span {
+            color: var(--n800);
+        }
+
+        body.dark .detail-field span {
+            color: var(--n200);
+        }
+
+        .med-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.9rem;
+            background: #fff;
+            border-radius: var(--radius-pill);
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+        }
+
+        body.dark .med-row {
+            background: var(--n900);
+        }
+
+        .referral-banner {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: var(--radius-md);
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            font-size: 0.88rem;
+            display: none;
+        }
+
+        body.dark .referral-banner {
+            background: #2a2000;
+            border-color: #5a4000;
+        }
+
+        /* ===== DOSE TRACKING ===== */
+        .dose-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 0.8rem;
+            background: var(--n100);
+            border-radius: var(--radius-pill);
+            margin-bottom: 0.4rem;
+        }
+
+        body.dark .dose-row {
+            background: var(--n900);
+        }
+
+        .dose-label {
+            width: 130px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .dose-icons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dose-icons i {
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .dose-icons i:hover {
+            transform: scale(1.15);
+        }
+
+        .fa-check-circle {
+            color: var(--a500);
+        }
+
+        .fa-times-circle {
+            color: var(--d700);
+        }
+
+        .fa-circle {
+            color: var(--n400);
+        }
+
+        /* ===== TABLES ===== */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.9rem 1rem;
+            background: var(--n100);
+            color: var(--n700);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        body.dark th {
+            background: var(--n900);
+            color: var(--n400);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--n200);
+            font-size: 0.88rem;
+        }
+
+        body.dark td {
+            border-color: var(--n700);
+        }
+
+        tr:hover td {
+            background: var(--n100);
+        }
+
+        body.dark tr:hover td {
+            background: var(--n900);
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+            margin: 1.5rem 0;
+        }
+
+        .chart-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            border: 1px solid var(--n200);
+            height: 280px;
+        }
+
+        body.dark .chart-card {
+            background: var(--n800);
+            border-color: var(--n700);
+        }
+
+        .chart-card h4 {
+            margin-bottom: 0.8rem;
+            color: var(--n700);
+            font-size: 0.95rem;
+        }
+
+        body.dark .chart-card h4 {
+            color: var(--n300);
+        }
+
+        /* ===== INVENTORY ===== */
+        .inv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .inv-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            border: 1px solid var(--n200);
+            box-shadow: var(--sh-sm);
+        }
+
+        body.dark .inv-card {
+            background: var(--n800);
+            border-color: var(--n700);
+        }
+
+        .inv-card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .stock-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--n300);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .stock-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--a500);
+            transition: width 0.4s;
+        }
+
+        .stock-fill.low {
+            background: var(--w700);
+        }
+
+        .stock-fill.critical {
+            background: var(--d700);
+        }
+
+        .inv-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--n600);
+            margin-bottom: 0.5rem;
+        }
+
+        .inv-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .inv-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* ===== MODAL DIALOGS ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        body.dark .modal {
+            background: var(--n800);
+        }
+
+        .modal h3 {
+            margin-bottom: 1.2rem;
+            color: var(--p700);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.dark .modal h3 {
+            color: var(--p300);
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+            margin-top: 1.2rem;
+        }
+
+        .modal-btns .btn {
+            padding: 0.7rem 1.5rem;
+        }
+
+        /* ===== FOOTER STATS ===== */
+        .footer-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            padding: 1rem 1.2rem;
+            background: #fff;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--n200);
+        }
+
+        body.dark .footer-stats {
+            background: var(--n800);
+            border-color: var(--n700);
+        }
+
+        .footer-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--n700);
+            font-size: 0.85rem;
+        }
+
+        .footer-stat i {
+            color: var(--p500);
+        }
+
+        .footer-stat strong {
+            color: var(--n900);
+            margin-left: 3px;
+        }
+
+        body.dark .footer-stat strong {
+            color: var(--n100);
+        }
+
+        /* ===== SITE FOOTER ===== */
+        .site-footer {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #eaeaea;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            margin-top: 1.5rem;
+            border-radius: var(--radius-lg);
+        }
+
+        .footer-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .footer-title span {
+            color: #4fd1c5;
+        }
+
+        .footer-credits {
+            font-size: 0.82rem;
+            opacity: 0.8;
+        }
+
+        .footer-credits span {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        /* ===== DB TAB ===== */
+        .db-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:600px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .app {
+                padding: 1rem;
+                border-radius: var(--radius-lg);
+            }
+
+            .logo-text h1 {
+                font-size: 1.3rem;
+            }
+
+            .nav-tab {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .drug-entry {
+                border-radius: var(--radius-md);
+            }
+
+            .footer-stats {
+                border-radius: var(--radius-lg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- PIN LOCK -->
+    <div id="pinOverlay">
+        <div class="pin-box">
+            <div class="pin-logo">🏥</div>
+            <h2>Pulse Jico</h2>
+            <p>Enter your PIN to access the system</p>
+            <div class="pin-dots">
+                <div class="pin-dot" id="d0"></div>
+                <div class="pin-dot" id="d1"></div>
+                <div class="pin-dot" id="d2"></div>
+                <div class="pin-dot" id="d3"></div>
+            </div>
+            <div class="pin-grid">
+                <button class="pin-btn" data-n="1">1</button>
+                <button class="pin-btn" data-n="2">2</button>
+                <button class="pin-btn" data-n="3">3</button>
+                <button class="pin-btn" data-n="4">4</button>
+                <button class="pin-btn" data-n="5">5</button>
+                <button class="pin-btn" data-n="6">6</button>
+                <button class="pin-btn" data-n="7">7</button>
+                <button class="pin-btn" data-n="8">8</button>
+                <button class="pin-btn" data-n="9">9</button>
+                <button class="pin-btn" data-n="clear" style="font-size:0.9rem;">CLR</button>
+                <button class="pin-btn" data-n="0">0</button>
+                <button class="pin-btn" data-n="back"><i class="fas fa-backspace"></i></button>
+            </div>
+            <div class="pin-error" id="pinError"></div>
+            <div class="pin-hint">Default PIN: 1234</div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- SPINNER -->
+    <div id="spinnerOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <div class="confirm-icon" id="confirmIcon">⚠️</div>
+            <h3 id="confirmTitle">Are you sure?</h3>
+            <p id="confirmMsg">This action cannot be undone.</p>
+            <div class="confirm-btns">
+                <button class="btn-cancel-c" id="confirmCancel">Cancel</button>
+                <button class="btn-confirm-c" id="confirmOk">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOCK MODAL -->
+    <div class="modal-overlay" id="stockModal">
+        <div class="modal">
+            <h3><i class="fas fa-pills"></i> Add / Update Stock</h3>
+            <div class="form-group"><label>Medication Name *</label><input type="text" class="form-control"
+                    id="stockName" placeholder="e.g. Paracetamol"></div>
+            <div class="form-grid">
+                <div class="form-group"><label>Quantity</label><input type="number" class="form-control" id="stockQty"
+                        placeholder="0" min="0"></div>
+                <div class="form-group"><label>Reorder Level</label><input type="number" class="form-control"
+                        id="stockReorder" placeholder="0" min="0"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Unit Price ($)</label><input type="number" class="form-control"
+                        id="stockPrice" placeholder="0.00" step="0.01" min="0"></div>
+                <div class="form-group"><label>Unit</label><input type="text" class="form-control" id="stockUnit"
+                        placeholder="tablets"></div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" id="stockCancel">Cancel</button>
+                <button class="btn btn-primary" id="stockSave" style="width:auto;">Save Stock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3><i class="fas fa-upload"></i> Import Student Database</h3>
+            <p style="margin-bottom:1rem;font-size:0.88rem;color:var(--n600);">Upload CSV or Excel with columns: Name,
+                Class, Stream, Age, Gender, Contact</p>
+            <div class="form-group"><input type="file" class="form-control" id="importFile" accept=".csv,.xlsx,.xls">
+            </div>
+            <div id="importProgress" style="display:none;margin:0.8rem 0;">
+                <div style="background:var(--n200);border-radius:var(--radius-pill);height:8px;overflow:hidden;">
+                    <div id="importBar" style="width:0%;height:100%;background:var(--p600);transition:width 0.3s;">
+                    </div>
+                </div>
+                <p id="importStatus" style="margin-top:0.5rem;font-size:0.85rem;color:var(--n600);"></p>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" id="importCancel">Cancel</button>
+                <button class="btn btn-primary" id="importConfirm" style="width:auto;">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT PATIENT MODAL -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3><i class="fas fa-user-edit"></i> Edit Patient</h3>
+            <input type="hidden" id="editPatientId">
+            <div class="form-group"><label>Full Name *</label><input type="text" class="form-control" id="editName">
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Class</label>
+                    <select class="form-control" id="editClass">
+                        <option>S.1</option>
+                        <option>S.2</option>
+                        <option>S.3</option>
+                        <option>S.4</option>
+                        <option>S.5</option>
+                        <option>S.6</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Stream</label>
+                    <select class="form-control" id="editStream">
+                        <option>East</option>
+                        <option>West</option>
+                        <option>North</option>
+                        <option>South</option>
+                        <option>Science</option>
+                        <option>Arts</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Age</label><input type="number" class="form-control" id="editAge" min="1"
+                        max="100"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Gender</label>
+                    <select class="form-control" id="editGender">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Contact</label><input type="text" class="form-control" id="editContact">
+                </div>
+            </div>
+            <div class="form-group"><label>Symptoms / Diagnosis</label><input type="text" class="form-control"
+                    id="editSymptoms"></div>
+            <div class="form-group"><label>Notes</label><textarea class="form-control" id="editNotes"
+                    rows="2"></textarea></div>
+            <div class="form-group" style="border-top:1px solid var(--n200);padding-top:1rem;margin-top:0.5rem;">
+                <label style="display:flex;align-items:center;justify-content:space-between;">
+                    <span><i class="fas fa-prescription"
+                            style="color:var(--p600);margin-right:6px;"></i>Medications</span>
+                    <button type="button" class="btn btn-secondary btn-sm" id="editAddMedBtn"><i
+                            class="fas fa-plus"></i> Add</button>
+                </label>
+                <div id="editMedsList" style="margin-top:0.6rem;display:flex;flex-direction:column;gap:0.5rem;"></div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-secondary" id="editCancel">Cancel</button>
+                <button class="btn btn-primary" id="editSave" style="width:auto;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="app" id="mainApp" style="display:none;">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-heart-pulse"></i></div>
+                <div class="logo-text">
+                    <h1>Pulse Jico</h1>
+                    <span class="logo-badge">Embracing ICT innovations in the 21st Century</span>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="btn-theme" id="themeToggle"><i class="fas fa-sun"></i><span>Theme</span></button>
+                <div class="sys-status">
+                    <div class="status-dot"></div>System Online
+                </div>
+            </div>
+        </div>
+
+        <!-- NAV TABS -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard"><i class="fas fa-clinic-medical"></i>Home</button>
+            <button class="nav-tab" data-tab="patients"><i class="fas fa-users"></i>Patients</button>
+            <button class="nav-tab" data-tab="database"><i class="fas fa-database"></i>Database</button>
+            <button class="nav-tab" data-tab="statistics"><i class="fas fa-chart-line"></i>Analytics</button>
+            <button class="nav-tab" data-tab="inventory"><i class="fas fa-pills"></i>Pharmacy</button>
+            <button class="nav-tab" data-tab="reports"><i class="fas fa-file-alt"></i>Reports</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard-tab" class="tab-pane active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e6f0ff;"><i class="fas fa-users"
+                            style="color:#004c97;"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalPatients">0</h3>
+                        <p>Total Patients</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e6ffe6;"><i class="fas fa-heart-circle-check"
+                            style="color:#1f5e3a;"></i></div>
+                    <div class="stat-info">
+                        <h3 id="activePatients">0</h3>
+                        <p>Active Cases</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3e6;"><i class="fas fa-clock"
+                            style="color:#b34a00;"></i></div>
+                    <div class="stat-info">
+                        <h3 id="todayVisits">0</h3>
+                        <p>Today's Visits</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f0e6ff;"><i class="fas fa-pills"
+                            style="color:#6a4e9a;"></i></div>
+                    <div class="stat-info">
+                        <h3 id="lowStock">0</h3>
+                        <p>Low Stock Items</p>
+                    </div>
+                </div>
+            </div>
+            <div class="dash-layout">
+                <!-- Registration Panel -->
+                <div class="panel">
+                    <div class="panel-title"><i class="fas fa-user-plus"></i><span>New Patient Registration</span></div>
+                    <div class="student-lookup">
+                        <input type="text" class="form-control" id="studentSearch"
+                            placeholder="Search student database..." list="studentList">
+                        <datalist id="studentList"></datalist>
+                        <button class="btn-lookup" id="lookupBtn"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" class="form-control" id="patientName" placeholder="Enter full name">
+                        <div class="field-error" id="nameError">Name is required</div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Class</label>
+                            <select class="form-control" id="patientClass">
+                                <option>S.1</option>
+                                <option>S.2</option>
+                                <option>S.3</option>
+                                <option>S.4</option>
+                                <option>S.5</option>
+                                <option>S.6</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Stream</label>
+                            <select class="form-control" id="patientStream">
+                                <option>East</option>
+                                <option>West</option>
+                                <option>North</option>
+                                <option>South</option>
+                                <option>Science</option>
+                                <option>Arts</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Age</label><input type="number" class="form-control"
+                                id="patientAge" min="1" max="100" placeholder="Age"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Gender</label>
+                            <select class="form-control" id="patientGender">
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Contact</label><input type="text" class="form-control"
+                                id="patientContact" placeholder="Phone/Email"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Symptoms / Diagnosis *</label>
+                        <input type="text" class="form-control" id="patientSymptoms" placeholder="e.g. Fever, headache">
+                        <div class="field-error" id="symptomsError">Symptoms are required</div>
+                    </div>
+                    <div class="form-group"><label>Additional Notes</label><textarea class="form-control"
+                            id="patientNotes" rows="2" placeholder="Any additional information..."></textarea></div>
+                    <div class="form-group"><label>Prescribed Medications</label>
+                        <div id="medicationsList"></div><button class="btn-add-drug" id="addMedBtn"><i
+                                class="fas fa-plus"></i> Add Medication</button>
+                    </div>
+                    <div class="referral-section">
+                        <label class="referral-toggle"><input type="checkbox" id="hasReferral"> <i
+                                class="fas fa-share"></i> Add Referral</label>
+                        <div class="referral-details" id="referralDetails">
+                            <div class="form-grid" style="margin-top:0.8rem;">
+                                <div class="form-group"><label>Referred To</label><input type="text"
+                                        class="form-control" id="referralTo" placeholder="Hospital/Clinic"></div>
+                                <div class="form-group"><label>Time</label><input type="time" class="form-control"
+                                        id="referralTime"></div>
+                            </div>
+                            <div class="form-group"><label>Reason</label><input type="text" class="form-control"
+                                    id="referralReason" placeholder="Reason for referral"></div>
+                            <div class="form-group"><label>Follow-up Date</label><input type="date" class="form-control"
+                                    id="followupDate"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="registerBtn"><i class="fas fa-save"></i> Register
+                        Patient</button>
+                </div>
+                <!-- Patient List Panel -->
+                <div class="panel">
+                    <div class="panel-title"><i class="fas fa-list"></i><span>Active Patients</span></div>
+                    <div class="form-group"><input type="text" class="form-control" id="patientSearch"
+                            placeholder="🔍 Search patients by name, ID, class..."></div>
+                    <div class="patient-list-wrap" id="patientList"></div>
+                </div>
+            </div>
+            <!-- Patient Detail Panel -->
+            <div class="panel" style="margin-top:1.2rem;" id="detailPanel">
+                <div class="panel-title">
+                    <i class="fas fa-user"></i>
+                    <span id="detailName">Select a patient to view details</span>
+                    <div style="margin-left:auto;display:flex;gap:0.5rem;" id="detailActions" style="display:none;">
+                        <button class="btn btn-secondary btn-sm" id="editPatientBtn" style="display:none;"><i
+                                class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-sm" id="deletePatientBtn" style="display:none;"><i
+                                class="fas fa-trash"></i> Delete</button>
+                        <button class="btn btn-success btn-sm" id="markCompleteBtn" style="display:none;"><i
+                                class="fas fa-check"></i> Mark Completed</button>
+                    </div>
+                </div>
+                <div id="detailEmpty" class="empty-state"><i class="fas fa-arrow-left"></i>
+                    <p>Select a patient from the list to view their details and track doses</p>
+                </div>
+                <div id="detailContent" style="display:none;">
+                    <div class="detail-grid">
+                        <div class="detail-field"><strong>Patient ID</strong><span id="dId"></span></div>
+                        <div class="detail-field"><strong>Class / Stream</strong><span id="dClass"></span></div>
+                        <div class="detail-field"><strong>Age / Gender</strong><span id="dAge"></span></div>
+                        <div class="detail-field"><strong>Contact</strong><span id="dContact"></span></div>
+                        <div class="detail-field"><strong>Symptoms</strong><span id="dSymptoms"></span></div>
+                        <div class="detail-field"><strong>Registered</strong><span id="dDate"></span></div>
+                    </div>
+                    <div class="panel" style="background:var(--n100);margin-bottom:0.8rem;">
+                        <h5 style="margin-bottom:0.6rem;font-size:0.9rem;"><i class="fas fa-prescription"
+                                style="color:var(--p600);"></i> Medications</h5>
+                        <div id="dMeds"></div>
+                    </div>
+                    <div class="referral-banner" id="dReferral"><i class="fas fa-share" style="color:var(--w700);"></i>
+                        <span id="dReferralText"></span>
+                    </div>
+                    <div style="margin-top:0.8rem;">
+                        <h5 style="margin-bottom:0.6rem;font-size:0.9rem;"><i class="fas fa-clock"
+                                style="color:var(--p600);"></i> Today's Dose Tracking</h5>
+                        <div id="doseTracking"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PATIENTS TAB -->
+        <div id="patients-tab" class="tab-pane">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-users"></i><span>Complete Patient Registry</span></div>
+                <div class="action-bar">
+                    <button class="btn btn-success" id="exportPatientsBtn"><i class="fas fa-file-excel"></i> Export
+                        Patients</button>
+                    <button class="btn btn-secondary" id="importStudentsBtn"><i class="fas fa-upload"></i> Import
+                        Students</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="patientsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Class</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Symptoms</th>
+                                <th>Status</th>
+                                <th>Visit Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATABASE TAB -->
+        <div id="database-tab" class="tab-pane">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-database"></i><span>Visual Database Explorer</span></div>
+                <div class="db-stats">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="dbTotal">0</h3>
+                            <p>Total Records</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="dbSize">0 KB</h3>
+                            <p>Storage Used</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="dbBackup">Never</h3>
+                            <p>Last Backup</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <select class="form-control" id="dbView" style="width:200px;">
+                        <option value="patients">Patients</option>
+                        <option value="medications">Medications</option>
+                        <option value="referrals">Referrals</option>
+                        <option value="inventory">Inventory</option>
+                        <option value="dispensing">Dispensing Log</option>
+                    </select>
+                </div>
+                <div class="table-wrap" id="dbContainer"></div>
+                <div class="action-bar" style="margin-top:1.5rem;">
+                    <button class="btn btn-success" id="backupBtn"><i class="fas fa-download"></i> Backup
+                        Database</button>
+                    <button class="btn btn-secondary" id="restoreBtn"><i class="fas fa-upload"></i> Restore
+                        Database</button>
+                    <button class="btn btn-primary" id="optimizeBtn"><i class="fas fa-broom"></i> Optimize</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="statistics-tab" class="tab-pane">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-chart-line"></i><span>Healthcare Analytics</span></div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h4>Common Conditions</h4><canvas id="conditionsChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Patient Status</h4><canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Monthly Trends</h4><canvas id="trendsChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Class Distribution</h4><canvas id="classChart"></canvas>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="avgRecovery">—</h3>
+                            <p>Avg Recovery (days)</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="peakHour">—</h3>
+                            <p>Peak Visit Hour</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="commonCond">—</h3>
+                            <p>Most Common Condition</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="refRate">0%</h3>
+                            <p>Referral Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PHARMACY TAB -->
+        <div id="inventory-tab" class="tab-pane">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-pills"></i><span>Pharmacy Inventory Management</span></div>
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="addStockBtn"><i class="fas fa-plus"></i> Add Stock</button>
+                    <button class="btn btn-success" id="exportInvBtn"><i class="fas fa-file-excel"></i> Export
+                        Inventory</button>
+                </div>
+                <div class="inv-grid" id="invGrid"></div>
+                <div class="panel" style="margin-top:1.5rem;">
+                    <h5 style="margin-bottom:0.8rem;font-size:0.9rem;"><i class="fas fa-history"
+                            style="color:var(--p600);"></i> Recent Dispensing Log</h5>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Medication</th>
+                                    <th>Qty</th>
+                                    <th>Patient</th>
+                                    <th>By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dispLog"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="reports-tab" class="tab-pane">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-file-alt"></i><span>Reports &amp; Exports</span></div>
+                <div class="action-bar">
+                    <button class="btn btn-success" id="fullReportBtn"><i class="fas fa-file-excel"></i> Complete
+                        Report</button>
+                    <button class="btn btn-secondary" id="emailReportBtn"><i class="fas fa-envelope"></i> Email
+                        Report</button>
+                    <button class="btn btn-primary" id="monthlyReportBtn"><i class="fas fa-calendar"></i> Monthly
+                        Summary</button>
+                </div>
+                <div class="stats-grid" style="margin:1.5rem 0;">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="rTotal">0</h3>
+                            <p>Total Patients</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="rMonth">0</h3>
+                            <p>This Month</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="rRecovered">0</h3>
+                            <p>Recovered</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="rActive">0</h3>
+                            <p>Active</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h4>Monthly Comparison</h4><canvas id="monthlyCompChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Recovery Rate</h4><canvas id="recoveryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER STATS -->
+        <div class="footer-stats">
+            <div class="footer-stat"><i class="fas fa-database"></i><span>Records: <strong
+                        id="fRecords">0</strong></span></div>
+            <div class="footer-stat"><i class="fas fa-check-circle" style="color:#2e8b57;"></i><span>Doses Given:
+                    <strong id="fDoses">0</strong></span></div>
+            <div class="footer-stat"><i class="fas fa-exclamation-triangle" style="color:#b34a00;"></i><span>Missed:
+                    <strong id="fMissed">0</strong></span></div>
+            <div class="footer-stat"><i class="fas fa-clock"></i><span>Updated: <strong id="fTime">Just
+                        now</strong></span></div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <p class="footer-title">Pulse <span>by JicoICTClub 2026.</span></p>
+        <p class="footer-credits">Made by <span>Wodelo Joshua O</span>, <span>Mukisa Minjo D</span>, <span>Myokos Caleb
+                Kweko</span>, <span>Ogwang Daniel</span>, <span>Etyang Shaun</span> &amp; <span>Enin Marvin</span></p>
+    </footer>
+
+    <script>
+        (function () {
+            'use strict';
+
+            function sanitize(str) { const d = document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML; }
+            function uuid() { if (crypto.randomUUID) return 'P-' + crypto.randomUUID().slice(0, 8).toUpperCase(); return 'P-' + Math.random().toString(36).slice(2, 10).toUpperCase(); }
+            function todayStr() { return new Date().toISOString().slice(0, 10); }
+            function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString() : 'N/A'; }
+
+            // TOAST
+            function showToast(msg, type = 'info', dur = 3500) {
+                const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+                const t = document.createElement('div');
+                t.className = 'toast ' + type;
+                t.innerHTML = '<i class="fas ' + icons[type] + '"></i><span>' + sanitize(msg) + '</span><button class="toast-close"><i class="fas fa-times"></i></button>';
+                const c = document.getElementById('toastContainer');
+                c.appendChild(t);
+                const close = () => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
+                t.querySelector('.toast-close').addEventListener('click', close);
+                setTimeout(close, dur);
+            }
+
+            // CONFIRM
+            function showConfirm(title, msg, icon) {
+                icon = icon || '⚠️';
+                return new Promise(function (res) {
+                    const ov = document.getElementById('confirmOverlay');
+                    document.getElementById('confirmTitle').textContent = title;
+                    document.getElementById('confirmMsg').textContent = msg;
+                    document.getElementById('confirmIcon').textContent = icon;
+                    ov.classList.add('show');
+                    const okBtn = document.getElementById('confirmOk');
+                    const cancelBtn = document.getElementById('confirmCancel');
+                    const newOk = okBtn.cloneNode(true); const newCancel = cancelBtn.cloneNode(true);
+                    okBtn.parentNode.replaceChild(newOk, okBtn);
+                    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+                    newOk.addEventListener('click', function () { ov.classList.remove('show'); res(true); }, { once: true });
+                    newCancel.addEventListener('click', function () { ov.classList.remove('show'); res(false); }, { once: true });
+                });
+            }
+
+            function showSpinner() { document.getElementById('spinnerOverlay').classList.add('show'); }
+            function hideSpinner() { document.getElementById('spinnerOverlay').classList.remove('show'); }
+
+            // PIN LOCK
+            (function () {
+                var CORRECT = localStorage.getItem('pulse_pin') || '1234';
+                var entered = '';
+                var dots = [0, 1, 2, 3].map(function (i) { return document.getElementById('d' + i); });
+                var errEl = document.getElementById('pinError');
+                function updateDots() { dots.forEach(function (d, i) { d.classList.toggle('filled', i < entered.length); }); }
+                function tryPin() {
+                    if (entered === CORRECT) {
+                        document.getElementById('pinOverlay').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                        window._sys = new HealthcareSystem();
+                    } else {
+                        errEl.textContent = 'Incorrect PIN. Try again.';
+                        entered = ''; updateDots();
+                        setTimeout(function () { errEl.textContent = ''; }, 2000);
+                    }
+                }
+                document.querySelectorAll('.pin-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var n = btn.dataset.n;
+                        if (n === 'clear') { entered = ''; errEl.textContent = ''; }
+                        else if (n === 'back') { entered = entered.slice(0, -1); }
+                        else if (entered.length < 4) { entered += n; }
+                        updateDots();
+                        if (entered.length === 4) setTimeout(tryPin, 150);
+                    });
+                });
+            })();
+
+            // HEALTHCARE SYSTEM
+            function HealthcareSystem() {
+                this.db = null;
+                this.patients = [];
+                this.studentDB = [];
+                this.inventory = [];
+                this.dispensing = [];
+                this.charts = {};
+                this.selectedId = null;
+                this.regCount = 0;
+                this.DB_NAME = 'PulseHealthcareDB_v2';
+                this.DB_VERSION = 1;
+                this._init();
+            }
+
+            HealthcareSystem.prototype._init = async function () {
+                showSpinner();
+                try {
+                    await this._openDB();
+                    await this._loadAll();
+                    this._autoUpdateMeds();
+                    this._setupEvents();
+                    this._refresh();
+                    this._renderInventory();
+                    this._renderDBView();
+                } catch (e) { showToast('Init error: ' + e.message, 'error'); }
+                finally { hideSpinner(); }
+            };
+
+            HealthcareSystem.prototype._openDB = function () {
+                var self = this;
+                return new Promise(function (res, rej) {
+                    var req = indexedDB.open(self.DB_NAME, self.DB_VERSION);
+                    req.onerror = function () { showToast('DB error', 'error'); rej(req.error); };
+                    req.onsuccess = function (e) { self.db = e.target.result; res(); };
+                    req.onupgradeneeded = function (e) {
+                        var db = e.target.result;
+                        ['patients', 'studentDB', 'inventory', 'dispensing'].forEach(function (s) {
+                            if (!db.objectStoreNames.contains(s)) {
+                                if (s === 'patients') db.createObjectStore(s, { keyPath: 'id' });
+                                else db.createObjectStore(s, { keyPath: '_id', autoIncrement: true });
+                            }
+                        });
+                    };
+                });
+            };
+
+            HealthcareSystem.prototype._saveStore = function (name, items) {
+                var self = this;
+                return new Promise(function (res, rej) {
+                    if (!self.db) { res(); return; }
+                    try {
+                        var tx = self.db.transaction(name, 'readwrite');
+                        var store = tx.objectStore(name);
+                        store.clear();
+                        items.forEach(function (item, i) {
+                            var obj = Object.assign({}, item);
+                            if (name !== 'patients' && !obj._id) obj._id = i + 1;
+                            store.put(obj);
+                        });
+                        tx.oncomplete = res;
+                        tx.onerror = function () { showToast('Save error', 'error'); rej(tx.error); };
+                    } catch (e) { rej(e); }
+                });
+            };
+
+            HealthcareSystem.prototype._loadStore = function (name) {
+                var self = this;
+                return new Promise(function (res) {
+                    if (!self.db) { res([]); return; }
+                    try {
+                        var tx = self.db.transaction(name, 'readonly');
+                        var req = tx.objectStore(name).getAll();
+                        req.onsuccess = function (e) { res(e.target.result || []); };
+                        req.onerror = function () { res([]); };
+                    } catch (e) { res([]); }
+                });
+            };
+
+            HealthcareSystem.prototype._saveAll = async function () {
+                await Promise.all([
+                    this._saveStore('patients', this.patients),
+                    this._saveStore('inventory', this.inventory),
+                    this._saveStore('dispensing', this.dispensing),
+                    this._saveStore('studentDB', this.studentDB),
+                ]);
+            };
+
+            HealthcareSystem.prototype._loadAll = async function () {
+                var results = await Promise.all([
+                    this._loadStore('patients'),
+                    this._loadStore('studentDB'),
+                    this._loadStore('inventory'),
+                    this._loadStore('dispensing'),
+                ]);
+                this.patients = results[0];
+                this.studentDB = results[1];
+                this.inventory = results[2].length ? results[2] : this._defaultInventory();
+                this.dispensing = results[3];
+            };
+
+            HealthcareSystem.prototype._defaultInventory = function () {
+                return [
+                    { id: 1, name: 'Paracetamol', quantity: 500, reorderLevel: 100, price: 0.05, unit: 'tablets' },
+                    { id: 2, name: 'Amoxicillin', quantity: 300, reorderLevel: 50, price: 0.15, unit: 'capsules' },
+                    { id: 3, name: 'Ibuprofen', quantity: 400, reorderLevel: 80, price: 0.08, unit: 'tablets' },
+                    { id: 4, name: 'Artemether', quantity: 100, reorderLevel: 30, price: 2.50, unit: 'doses' },
+                    { id: 5, name: 'Cough Syrup', quantity: 50, reorderLevel: 20, price: 3.00, unit: 'bottles' },
+                ];
+            };
+
+            HealthcareSystem.prototype._autoUpdateMeds = function () {
+                var now = new Date();
+                this.patients.forEach(function (p) {
+                    if (!p.medications) return;
+                    p.medications.forEach(function (m) {
+                        if (m.status === 'active' && p.registrationDate) {
+                            var end = new Date(p.registrationDate);
+                            end.setDate(end.getDate() + (m.duration || 3));
+                            if (now > end) m.status = 'completed';
+                        }
+                    });
+                });
+            };
+
+            HealthcareSystem.prototype._refresh = function () {
+                var self = this;
+                var t = this.patients.length;
+                var active = this.patients.filter(function (p) { return p.status === 'active'; }).length;
+                var td = todayStr();
+                var todayV = this.patients.filter(function (p) { return p.registrationDate && p.registrationDate.startsWith(td); }).length;
+                var lowS = this.inventory.filter(function (i) { return i.quantity <= i.reorderLevel; }).length;
+                var month = new Date().toISOString().slice(0, 7);
+
+                document.getElementById('totalPatients').textContent = t;
+                document.getElementById('activePatients').textContent = active;
+                document.getElementById('todayVisits').textContent = todayV;
+                document.getElementById('lowStock').textContent = lowS;
+                document.getElementById('fRecords').textContent = t;
+                document.getElementById('fTime').textContent = new Date().toLocaleTimeString();
+                document.getElementById('rTotal').textContent = t;
+                document.getElementById('rMonth').textContent = this.patients.filter(function (p) { return p.registrationDate && p.registrationDate.startsWith(month); }).length;
+                document.getElementById('rRecovered').textContent = this.patients.filter(function (p) { return p.status === 'completed'; }).length;
+                document.getElementById('rActive').textContent = active;
+                document.getElementById('dbTotal').textContent = t + this.inventory.length + this.dispensing.length;
+                document.getElementById('dbSize').textContent = (new Blob([JSON.stringify({ p: this.patients, i: this.inventory })]).size / 1024).toFixed(1) + ' KB';
+
+                var given = 0, missed = 0;
+                this.patients.filter(function (p) { return p.status === 'active'; }).forEach(function (p) {
+                    var adh = (p.adherence && p.adherence[td]) || {};
+                    Object.values(adh).forEach(function (med) {
+                        Object.values(med).forEach(function (v) { if (v === true) given++; else if (v === false) missed++; });
+                    });
+                });
+                document.getElementById('fDoses').textContent = given;
+                document.getElementById('fMissed').textContent = missed;
+
+                this._renderPatientList();
+                this._renderPatientsTable();
+                this._updateAnalytics();
+                this._updateAllCharts();
+            };
+
+            HealthcareSystem.prototype._renderPatientList = function (filter) {
+                filter = filter || '';
+                var self = this;
+                var container = document.getElementById('patientList');
+                if (!container) return;
+                var q = filter.toLowerCase();
+                var filtered = this.patients.filter(function (p) {
+                    return !q ||
+                        (p.name && p.name.toLowerCase().includes(q)) ||
+                        (p.id && p.id.toLowerCase().includes(q)) ||
+                        (p.class && p.class.toLowerCase().includes(q)) ||
+                        (p.symptoms && p.symptoms.toLowerCase().includes(q));
+                });
+                if (!filtered.length) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-user-slash"></i><p>' + (filter ? 'No patients match your search.' : 'No patients registered yet.') + '</p></div>';
+                    return;
+                }
+                container.innerHTML = filtered.map(function (p) {
+                    var sel = p.id === self.selectedId ? ' selected' : '';
+                    var statusClass = p.status === 'active' ? 'status-active' : 'status-completed';
+                    var statusLabel = p.status === 'active' ? '🟢 Active' : '✅ Done';
+                    return '<div class="patient-item' + sel + '" data-id="' + sanitize(p.id) + '">' +
+                        '<div><div class="p-name">' + sanitize(p.name || 'Unnamed') + '</div>' +
+                        '<div class="p-sub">' + sanitize(p.id) + ' · ' + sanitize(p.class || 'N/A') + ' ' + sanitize(p.stream || '') + '</div></div>' +
+                        '<span class="status-badge ' + statusClass + '">' + statusLabel + '</span></div>';
+                }).join('');
+                container.querySelectorAll('.patient-item').forEach(function (el) {
+                    el.addEventListener('click', function () { self._showDetail(el.dataset.id); });
+                });
+            };
+
+            HealthcareSystem.prototype._renderPatientsTable = function () {
+                var self = this;
+                var tbody = document.getElementById('patientsBody');
+                if (!tbody) return;
+                if (!this.patients.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--n500);">No patients registered yet</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = this.patients.map(function (p) {
+                    var sc = p.status === 'active' ? 'status-active' : 'status-completed';
+                    var sl = p.status === 'active' ? 'Active' : 'Completed';
+                    return '<tr>' +
+                        '<td>' + sanitize(p.id) + '</td>' +
+                        '<td><strong>' + sanitize(p.name || 'N/A') + '</strong></td>' +
+                        '<td>' + sanitize(p.class || 'N/A') + ' ' + sanitize(p.stream || '') + '</td>' +
+                        '<td>' + sanitize(String(p.age || 'N/A')) + '</td>' +
+                        '<td>' + sanitize(p.gender || 'N/A') + '</td>' +
+                        '<td>' + sanitize(p.symptoms || 'N/A') + '</td>' +
+                        '<td><span class="status-badge ' + sc + '">' + sl + '</span></td>' +
+                        '<td>' + fmtDate(p.registrationDate) + '</td>' +
+                        '<td style="display:flex;gap:0.3rem;">' +
+                        '<button class="btn btn-secondary btn-sm" data-action="view" data-id="' + sanitize(p.id) + '"><i class="fas fa-eye"></i></button>' +
+                        '<button class="btn btn-danger btn-sm" data-action="delete" data-id="' + sanitize(p.id) + '"><i class="fas fa-trash"></i></button>' +
+                        '</td></tr>';
+                }).join('');
+            };
+
+            HealthcareSystem.prototype._showDetail = function (id) {
+                var self = this;
+                var p = this.patients.find(function (x) { return x.id === id; });
+                if (!p) return;
+                this.selectedId = id;
+                document.getElementById('detailEmpty').style.display = 'none';
+                document.getElementById('detailContent').style.display = 'block';
+                document.getElementById('detailName').textContent = p.name || 'Unknown';
+                var editBtn = document.getElementById('editPatientBtn');
+                var delBtn = document.getElementById('deletePatientBtn');
+                var complBtn = document.getElementById('markCompleteBtn');
+                editBtn.style.display = 'inline-flex'; delBtn.style.display = 'inline-flex';
+                complBtn.style.display = p.status === 'active' ? 'inline-flex' : 'none';
+                editBtn.dataset.id = id; delBtn.dataset.id = id; complBtn.dataset.id = id;
+                document.getElementById('dId').textContent = p.id || 'N/A';
+                document.getElementById('dClass').textContent = (p.class || 'N/A') + ' · ' + (p.stream || 'N/A');
+                document.getElementById('dAge').textContent = (p.age || 'N/A') + ' yrs · ' + (p.gender || 'N/A');
+                document.getElementById('dContact').textContent = p.contact || 'Not provided';
+                document.getElementById('dSymptoms').textContent = p.symptoms || 'None';
+                document.getElementById('dDate').textContent = fmtDate(p.registrationDate);
+                var medsDiv = document.getElementById('dMeds');
+                if (p.medications && p.medications.length) {
+                    medsDiv.innerHTML = p.medications.map(function (m) {
+                        var c = m.status === 'active' ? 'var(--w700)' : 'var(--a500)';
+                        var l = m.status === 'active' ? '🟡 Ongoing' : '✅ Done';
+                        return '<div class="med-row"><span><strong>' + sanitize(m.name || '?') + '</strong> ' + sanitize(m.dosage || '') + '</span>' +
+                            '<span style="color:var(--n500);">' + sanitize(String(m.timesPerDay || 0)) + 'x/day · ' + sanitize(String(m.duration || 0)) + ' days</span>' +
+                            '<span style="color:' + c + ';">' + l + '</span></div>';
+                    }).join('');
+                } else {
+                    medsDiv.innerHTML = '<p style="color:var(--n500);font-size:0.88rem;">No medications prescribed</p>';
+                }
+                var refBanner = document.getElementById('dReferral');
+                if (p.referral) {
+                    refBanner.style.display = 'block';
+                    document.getElementById('dReferralText').textContent = 'Referred to ' + (p.referral.to || '?') + ' at ' + (p.referral.time || 'N/A') + ' — ' + (p.referral.reason || '');
+                } else { refBanner.style.display = 'none'; }
+                this._renderDoseTracking(p);
+                this._renderPatientList(document.getElementById('patientSearch').value);
+                document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            };
+
+            HealthcareSystem.prototype._renderDoseTracking = function (p) {
+                var self = this;
+                var container = document.getElementById('doseTracking');
+                var td = todayStr();
+                var activeMeds = (p.medications || []).filter(function (m) { return m.status === 'active'; });
+                if (!activeMeds.length) { container.innerHTML = '<p style="color:var(--n500);font-size:0.88rem;">No active medications to track</p>'; return; }
+                container.innerHTML = activeMeds.map(function (med) {
+                    var times = Math.min(med.timesPerDay || 2, 3);
+                    var slots = ['Morning', 'Afternoon', 'Evening'].slice(0, times);
+                    var adh = (p.adherence && p.adherence[td] && p.adherence[td][med.name]) || {};
+                    return '<div class="dose-row"><span class="dose-label">' + sanitize(med.name) + '</span>' +
+                        '<div class="dose-icons">' + slots.map(function (slot) {
+                            var key = slot.toLowerCase();
+                            var st = adh[key];
+                            var ic = st === true ? 'fa-check-circle' : st === false ? 'fa-times-circle' : 'fa-circle';
+                            return '<i class="fas ' + ic + '" title="' + slot + '" data-pid="' + sanitize(p.id) + '" data-med="' + sanitize(med.name) + '" data-slot="' + key + '"></i>';
+                        }).join('') + '</div>' +
+                        '<span style="font-size:0.78rem;color:var(--n500);">' + slots.join(' · ') + '</span></div>';
+                }).join('');
+                container.querySelectorAll('.dose-icons i').forEach(function (icon) {
+                    icon.addEventListener('click', function (e) {
+                        var pid = e.target.dataset.pid, med = e.target.dataset.med, slot = e.target.dataset.slot;
+                        var patient = self.patients.find(function (x) { return x.id === pid; });
+                        if (!patient) return;
+                        var cur = patient.adherence && patient.adherence[td] && patient.adherence[td][med] && patient.adherence[td][med][slot];
+                        var nv = cur === true ? false : (cur === false ? null : true);
+                        self._updateDose(patient, med, slot, nv);
+                    });
+                });
+            };
+
+            HealthcareSystem.prototype._updateDose = function (patient, medication, slot, value) {
+                var self = this;
+                var td = todayStr();
+                if (!patient.adherence) patient.adherence = {};
+                if (!patient.adherence[td]) patient.adherence[td] = {};
+                if (!patient.adherence[td][medication]) patient.adherence[td][medication] = { morning: null, afternoon: null, evening: null };
+                patient.adherence[td][medication][slot] = value;
+                if (value === true) {
+                    var inv = this.inventory.find(function (i) { return i.name && i.name.toLowerCase() === medication.toLowerCase(); });
+                    if (inv && inv.quantity > 0) {
+                        inv.quantity--;
+                        self.dispensing.push({ date: td, medication: medication, quantity: 1, patient: patient.id, nurse: 'System', dose: slot });
+                    }
+                }
+                this._saveAll().then(function () { self._refresh(); self._showDetail(patient.id); });
+            };
+
+            HealthcareSystem.prototype._registerPatient = function () {
+                var self = this;
+                var name = document.getElementById('patientName').value.trim();
+                var symptoms = document.getElementById('patientSymptoms').value.trim();
+                var valid = true;
+                var nameErr = document.getElementById('nameError');
+                var sympErr = document.getElementById('symptomsError');
+                nameErr.classList.remove('show'); sympErr.classList.remove('show');
+                document.getElementById('patientName').classList.remove('error');
+                document.getElementById('patientSymptoms').classList.remove('error');
+                if (!name) { nameErr.classList.add('show'); document.getElementById('patientName').classList.add('error'); valid = false; }
+                if (!symptoms) { sympErr.classList.add('show'); document.getElementById('patientSymptoms').classList.add('error'); valid = false; }
+                if (!valid) return;
+                var cls = document.getElementById('patientClass').value;
+                var td = todayStr();
+                var dup = this.patients.find(function (p) { return p.name && p.name.toLowerCase() === name.toLowerCase() && p.class === cls && p.registrationDate && p.registrationDate.startsWith(td); });
+                if (dup) { showToast(name + ' from ' + cls + ' was already registered today!', 'warning'); return; }
+                var meds = [];
+                document.querySelectorAll('.drug-entry').forEach(function (row) {
+                    var n = row.querySelector('.drug-name') && row.querySelector('.drug-name').value.trim();
+                    if (n) { meds.push({ name: n, dosage: row.querySelector('.drug-dosage') ? row.querySelector('.drug-dosage').value.trim() : '', duration: parseInt(row.querySelector('.drug-dur') ? row.querySelector('.drug-dur').value : 3) || 3, timesPerDay: parseInt(row.querySelector('.drug-times') ? row.querySelector('.drug-times').value : 2) || 2, status: 'active' }); }
+                });
+                var referral = null;
+                if (document.getElementById('hasReferral').checked) {
+                    referral = { to: document.getElementById('referralTo').value.trim(), time: document.getElementById('referralTime').value, reason: document.getElementById('referralReason').value.trim(), followup: document.getElementById('followupDate').value };
+                }
+                var patient = { id: uuid(), name: name, class: cls, stream: document.getElementById('patientStream').value, age: parseInt(document.getElementById('patientAge').value) || null, gender: document.getElementById('patientGender').value, contact: document.getElementById('patientContact').value.trim(), symptoms: symptoms, notes: document.getElementById('patientNotes').value.trim(), medications: meds, referral: referral, status: 'active', registrationDate: new Date().toISOString(), adherence: {} };
+                this.patients.push(patient);
+                this.regCount++;
+                this._saveAll().then(function () {
+                    self._refresh(); self._clearForm();
+                    showToast(name + ' registered successfully!', 'success');
+                    if (self.regCount % 10 === 0) setTimeout(function () { showToast('💾 Reminder: Please backup your database!', 'warning', 6000); }, 1000);
+                    self._showDetail(patient.id);
+                });
+            };
+
+            HealthcareSystem.prototype._clearForm = function () {
+                ['patientName', 'patientAge', 'patientContact', 'patientSymptoms', 'patientNotes', 'referralTo', 'referralReason', 'studentSearch', 'referralTime', 'followupDate'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+                document.getElementById('hasReferral').checked = false;
+                document.getElementById('referralDetails').classList.remove('open');
+                document.getElementById('medicationsList').innerHTML = '';
+                this._addMedRow();
+            };
+
+            HealthcareSystem.prototype._openEditModal = function (id) {
+                var self = this;
+                var p = this.patients.find(function (x) { return x.id === id; });
+                if (!p) return;
+                document.getElementById('editPatientId').value = id;
+                document.getElementById('editName').value = p.name || '';
+                document.getElementById('editClass').value = p.class || 'S.1';
+                document.getElementById('editStream').value = p.stream || 'East';
+                document.getElementById('editAge').value = p.age || '';
+                document.getElementById('editGender').value = p.gender || 'Male';
+                document.getElementById('editContact').value = p.contact || '';
+                document.getElementById('editSymptoms').value = p.symptoms || '';
+                document.getElementById('editNotes').value = p.notes || '';
+                // Populate medications
+                var medsList = document.getElementById('editMedsList');
+                medsList.innerHTML = '';
+                var meds = p.medications && p.medications.length ? p.medications : [];
+                meds.forEach(function (m) { self._addEditMedRow(m); });
+                if (!meds.length) self._addEditMedRow(null);
+                document.getElementById('editModal').classList.add('show');
+            };
+
+            HealthcareSystem.prototype._addEditMedRow = function (med) {
+                var container = document.getElementById('editMedsList');
+                if (!container) return;
+                var row = document.createElement('div');
+                row.className = 'drug-entry';
+                var statusOpts = ['active', 'completed'].map(function (s) {
+                    return '<option value="' + s + '"' + (med && med.status === s ? ' selected' : '') + '>' + (s === 'active' ? 'Active' : 'Completed') + '</option>';
+                }).join('');
+                row.innerHTML =
+                    '<input type="text" class="form-control drug-name" placeholder="Medication" value="' + sanitize(med ? med.name || '' : '') + '">' +
+                    '<input type="text" class="form-control drug-dosage" placeholder="Dosage" value="' + sanitize(med ? med.dosage || '' : '') + '">' +
+                    '<input type="number" class="form-control drug-dur" placeholder="Days" min="1" style="width:72px;" value="' + (med ? med.duration || 3 : 3) + '">' +
+                    '<select class="form-control drug-times" style="width:65px;"><option value="1"' + (med && med.timesPerDay == 1 ? ' selected' : '') + '>1x</option><option value="2"' + (med && med.timesPerDay == 2 || !med ? ' selected' : '') + '>2x</option><option value="3"' + (med && med.timesPerDay == 3 ? ' selected' : '') + '>3x</option></select>' +
+                    '<select class="form-control drug-status" style="width:100px;">' + statusOpts + '</select>' +
+                    '<button type="button" class="btn-rm-drug"><i class="fas fa-times"></i></button>';
+                row.querySelector('.btn-rm-drug').addEventListener('click', function () {
+                    if (document.querySelectorAll('#editMedsList .drug-entry').length > 1) row.remove();
+                    else { row.querySelectorAll('input').forEach(function (i) { i.value = ''; }); }
+                });
+                container.appendChild(row);
+            };
+
+            HealthcareSystem.prototype._saveEdit = function () {
+                var self = this;
+                var id = document.getElementById('editPatientId').value;
+                var p = this.patients.find(function (x) { return x.id === id; });
+                if (!p) return;
+                var name = document.getElementById('editName').value.trim();
+                if (!name) { showToast('Name is required', 'error'); return; }
+                p.name = name; p.class = document.getElementById('editClass').value; p.stream = document.getElementById('editStream').value;
+                p.age = parseInt(document.getElementById('editAge').value) || null; p.gender = document.getElementById('editGender').value;
+                p.contact = document.getElementById('editContact').value.trim(); p.symptoms = document.getElementById('editSymptoms').value.trim();
+                p.notes = document.getElementById('editNotes').value.trim();
+                // Collect medications from edit modal
+                var newMeds = [];
+                document.querySelectorAll('#editMedsList .drug-entry').forEach(function (row) {
+                    var n = row.querySelector('.drug-name') ? row.querySelector('.drug-name').value.trim() : '';
+                    if (n) {
+                        newMeds.push({
+                            name: n,
+                            dosage: row.querySelector('.drug-dosage') ? row.querySelector('.drug-dosage').value.trim() : '',
+                            duration: parseInt(row.querySelector('.drug-dur') ? row.querySelector('.drug-dur').value : 3) || 3,
+                            timesPerDay: parseInt(row.querySelector('.drug-times') ? row.querySelector('.drug-times').value : 2) || 2,
+                            status: row.querySelector('.drug-status') ? row.querySelector('.drug-status').value : 'active'
+                        });
+                    }
+                });
+                p.medications = newMeds;
+                document.getElementById('editModal').classList.remove('show');
+                this._saveAll().then(function () { self._refresh(); self._showDetail(id); showToast('Patient updated', 'success'); });
+            };
+
+            HealthcareSystem.prototype._deletePatient = async function (id) {
+                var self = this;
+                var p = this.patients.find(function (x) { return x.id === id; });
+                if (!p) return;
+                var ok = await showConfirm('Delete Patient', 'Remove ' + p.name + ' from the system? This cannot be undone.', '🗑️');
+                if (!ok) return;
+                this.patients = this.patients.filter(function (x) { return x.id !== id; });
+                if (this.selectedId === id) {
+                    this.selectedId = null;
+                    document.getElementById('detailEmpty').style.display = 'block';
+                    document.getElementById('detailContent').style.display = 'none';
+                    document.getElementById('detailName').textContent = 'Select a patient to view details';
+                    document.getElementById('editPatientBtn').style.display = 'none';
+                    document.getElementById('deletePatientBtn').style.display = 'none';
+                    document.getElementById('markCompleteBtn').style.display = 'none';
+                }
+                this._saveAll().then(function () { self._refresh(); showToast(p.name + ' removed', 'info'); });
+            };
+
+            HealthcareSystem.prototype._markCompleted = async function (id) {
+                var self = this;
+                var p = this.patients.find(function (x) { return x.id === id; });
+                if (!p) return;
+                var ok = await showConfirm('Mark as Completed', 'Mark ' + p.name + "'s treatment as completed?", '✅');
+                if (!ok) return;
+                p.status = 'completed'; p.completedDate = new Date().toISOString();
+                if (p.medications) p.medications.forEach(function (m) { m.status = 'completed'; });
+                this._saveAll().then(function () { self._refresh(); self._showDetail(id); showToast(p.name + ' marked as completed', 'success'); });
+            };
+
+            HealthcareSystem.prototype._addMedRow = function () {
+                var c = document.getElementById('medicationsList');
+                if (!c) return;
+                var d = document.createElement('div');
+                d.className = 'drug-entry';
+                d.innerHTML = '<input type="text" class="form-control drug-name" placeholder="Medication name">' +
+                    '<input type="text" class="form-control drug-dosage" placeholder="Dosage">' +
+                    '<input type="number" class="form-control drug-dur" placeholder="Days" value="3" min="1" style="width:72px;">' +
+                    '<select class="form-control drug-times" style="width:65px;"><option value="1">1x</option><option value="2" selected>2x</option><option value="3">3x</option></select>' +
+                    '<button class="btn-rm-drug"><i class="fas fa-times"></i></button>';
+                d.querySelector('.btn-rm-drug').addEventListener('click', function () {
+                    if (document.querySelectorAll('.drug-entry').length > 1) d.remove();
+                });
+                c.appendChild(d);
+            };
+
+            HealthcareSystem.prototype._renderInventory = function () {
+                var self = this;
+                var grid = document.getElementById('invGrid');
+                if (!grid) return;
+                if (!this.inventory.length) { grid.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>No inventory items</p></div>'; }
+                else {
+                    grid.innerHTML = this.inventory.map(function (item) {
+                        var pct = Math.min((item.quantity / (item.reorderLevel * 3)) * 100, 100);
+                        var cls = item.quantity <= item.reorderLevel ? 'critical' : item.quantity <= item.reorderLevel * 2 ? 'low' : '';
+                        return '<div class="inv-card"><h4>' + sanitize(item.name) + '</h4>' +
+                            '<div class="inv-meta"><span>Qty: <strong>' + item.quantity + '</strong></span><span>Reorder: ' + item.reorderLevel + '</span></div>' +
+                            '<div class="stock-bar"><div class="stock-fill ' + cls + '" style="width:' + pct + '%"></div></div>' +
+                            '<div class="inv-meta"><span>' + sanitize(item.unit || 'units') + '</span><span>$' + (item.price || 0).toFixed(2) + '/unit</span></div>' +
+                            '<div class="inv-actions">' +
+                            '<button class="btn btn-secondary btn-sm" data-action="editstock" data-id="' + item.id + '"><i class="fas fa-edit"></i> Update</button>' +
+                            '<button class="btn btn-success btn-sm" data-action="dispense" data-id="' + item.id + '"><i class="fas fa-arrow-right"></i> Dispense</button>' +
+                            '</div></div>';
+                    }).join('');
+                }
+                var logBody = document.getElementById('dispLog');
+                if (logBody) {
+                    var recent = this.dispensing.slice(-10).reverse();
+                    logBody.innerHTML = recent.length ? recent.map(function (d) {
+                        return '<tr><td>' + sanitize(d.date) + '</td><td>' + sanitize(d.medication) + '</td><td>' + d.quantity + '</td><td>' + sanitize(d.patient) + '</td><td>' + sanitize(d.nurse) + '</td></tr>';
+                    }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--n500);">No dispensing records</td></tr>';
+                }
+            };
+
+            HealthcareSystem.prototype._showStockModal = function (id) {
+                var item = id ? this.inventory.find(function (i) { return i.id === id; }) : null;
+                document.getElementById('stockName').value = item ? item.name : '';
+                document.getElementById('stockQty').value = item ? item.quantity : 0;
+                document.getElementById('stockReorder').value = item ? item.reorderLevel : 0;
+                document.getElementById('stockPrice').value = item ? item.price : 0;
+                document.getElementById('stockUnit').value = item ? item.unit : 'tablets';
+                document.getElementById('stockModal').dataset.editId = id || '';
+                document.getElementById('stockModal').classList.add('show');
+            };
+
+            HealthcareSystem.prototype._saveStock = function () {
+                var self = this;
+                var name = document.getElementById('stockName').value.trim();
+                if (!name) { showToast('Medication name required', 'error'); return; }
+                var qty = parseInt(document.getElementById('stockQty').value) || 0;
+                var reorder = parseInt(document.getElementById('stockReorder').value) || 0;
+                var price = parseFloat(document.getElementById('stockPrice').value) || 0;
+                var unit = document.getElementById('stockUnit').value.trim() || 'units';
+                var editId = parseInt(document.getElementById('stockModal').dataset.editId) || null;
+                if (editId) {
+                    var item = this.inventory.find(function (i) { return i.id === editId; });
+                    if (item) Object.assign(item, { name: name, quantity: qty, reorderLevel: reorder, price: price, unit: unit });
+                } else {
+                    var existing = this.inventory.find(function (i) { return i.name.toLowerCase() === name.toLowerCase(); });
+                    if (existing) Object.assign(existing, { quantity: qty, reorderLevel: reorder, price: price, unit: unit });
+                    else this.inventory.push({ id: Date.now(), name: name, quantity: qty, reorderLevel: reorder, price: price, unit: unit });
+                }
+                document.getElementById('stockModal').classList.remove('show');
+                this._saveAll().then(function () { self._renderInventory(); self._refresh(); showToast('Stock updated', 'success'); });
+            };
+
+            HealthcareSystem.prototype._dispenseStock = function (id) {
+                var self = this;
+                var item = this.inventory.find(function (i) { return i.id === id; });
+                if (!item) { showToast('Item not found', 'error'); return; }
+                if (item.quantity <= 0) { showToast('Out of stock!', 'error'); return; }
+                item.quantity--;
+                this.dispensing.push({ date: todayStr(), medication: item.name, quantity: 1, patient: 'Manual', nurse: 'Staff' });
+                this._saveAll().then(function () { self._renderInventory(); self._refresh(); showToast('Dispensed 1 ' + (item.unit || 'unit') + ' of ' + item.name, 'info'); });
+            };
+
+            HealthcareSystem.prototype._renderDBView = function () {
+                var view = document.getElementById('dbView');
+                if (!view) return;
+                var v = view.value;
+                var container = document.getElementById('dbContainer');
+                if (!container) return;
+                var headers = [], data = [];
+                if (v === 'patients') { headers = ['ID', 'Name', 'Class', 'Age', 'Gender', 'Status', 'Registered']; data = this.patients.map(function (p) { return [p.id, p.name, (p.class || '') + ' ' + (p.stream || ''), p.age, p.gender, p.status, fmtDate(p.registrationDate)]; }); }
+                else if (v === 'medications') { headers = ['Patient', 'Medication', 'Dosage', 'Times/Day', 'Duration', 'Status']; data = this.patients.flatMap(function (p) { return (p.medications || []).map(function (m) { return [(p.name || '') + '(' + p.id + ')', m.name, m.dosage, m.timesPerDay, m.duration, m.status]; }); }); }
+                else if (v === 'referrals') { headers = ['Patient', 'Referred To', 'Time', 'Reason', 'Follow-up']; data = this.patients.filter(function (p) { return p.referral; }).map(function (p) { return [(p.name || '') + '(' + p.id + ')', p.referral.to, p.referral.time, p.referral.reason, p.referral.followup]; }); }
+                else if (v === 'inventory') { headers = ['Medication', 'Quantity', 'Reorder Level', 'Price', 'Unit']; data = this.inventory.map(function (i) { return [i.name, i.quantity, i.reorderLevel, '$' + i.price, i.unit]; }); }
+                else if (v === 'dispensing') { headers = ['Date', 'Medication', 'Qty', 'Patient', 'By']; data = this.dispensing.map(function (d) { return [d.date, d.medication, d.quantity, d.patient, d.nurse]; }); }
+                container.innerHTML = '<table><thead><tr>' + headers.map(function (h) { return '<th>' + sanitize(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+                    (data.length ? data.map(function (row) { return '<tr>' + row.map(function (c) { return '<td>' + sanitize(String(c == null ? '' : c)) + '</td>'; }).join('') + '</tr>'; }).join('')
+                        : '<tr><td colspan="10" style="text-align:center;padding:1.5rem;color:var(--n500);">No data</td></tr>') + '</tbody></table>';
+            };
+
+            HealthcareSystem.prototype._updateAnalytics = function () {
+                var completed = this.patients.filter(function (p) { return p.status === 'completed' && p.completedDate && p.registrationDate; });
+                if (completed.length) {
+                    var avg = completed.reduce(function (s, p) { return s + (new Date(p.completedDate) - new Date(p.registrationDate)) / (86400000); }, 0) / completed.length;
+                    document.getElementById('avgRecovery').textContent = avg.toFixed(1);
+                } else document.getElementById('avgRecovery').textContent = '—';
+                var hours = {};
+                this.patients.forEach(function (p) { if (p.registrationDate) { var h = new Date(p.registrationDate).getHours(); hours[h] = (hours[h] || 0) + 1; } });
+                var peak = Object.entries(hours).sort(function (a, b) { return b[1] - a[1]; })[0];
+                document.getElementById('peakHour').textContent = peak ? String(peak[0]).padStart(2, '0') + ':00' : '—';
+                var conds = {};
+                this.patients.forEach(function (p) { if (p.symptoms) { var c = p.symptoms.split(',')[0].trim(); conds[c] = (conds[c] || 0) + 1; } });
+                var top = Object.entries(conds).sort(function (a, b) { return b[1] - a[1]; })[0];
+                document.getElementById('commonCond').textContent = top ? top[0] : '—';
+                var refs = this.patients.filter(function (p) { return p.referral; }).length;
+                document.getElementById('refRate').textContent = this.patients.length ? ((refs / this.patients.length) * 100).toFixed(1) + '%' : '0%';
+            };
+
+            HealthcareSystem.prototype._makeChart = function (id, type, labels, datasets) {
+                var canvas = document.getElementById(id);
+                if (!canvas) return;
+                if (this.charts[id]) this.charts[id].destroy();
+                var isDark = document.body.classList.contains('dark');
+                var tc = isDark ? '#94a3b8' : '#475569';
+                var opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: tc } } } };
+                if (type === 'bar' || type === 'line') opts.scales = { x: { ticks: { color: tc } }, y: { ticks: { color: tc } } };
+                this.charts[id] = new Chart(canvas.getContext('2d'), { type: type, data: { labels: labels, datasets: datasets }, options: opts });
+            };
+
+            HealthcareSystem.prototype._updateAllCharts = function () {
+                var COLORS = ['#004c97', '#1f5e3a', '#b34a00', '#6a4e9a', '#c02f2f', '#2e8b57', '#e67e22', '#16a085'];
+                var conds = {};
+                this.patients.forEach(function (p) { if (p.symptoms) { var c = p.symptoms.split(',')[0].trim(); conds[c] = (conds[c] || 0) + 1; } });
+                var cKeys = Object.keys(conds).length ? Object.keys(conds) : ['No Data'];
+                var cVals = Object.keys(conds).length ? Object.values(conds) : [1];
+                this._makeChart('conditionsChart', 'doughnut', cKeys, [{ data: cVals, backgroundColor: COLORS }]);
+                var active = this.patients.filter(function (p) { return p.status === 'active'; }).length;
+                var done = this.patients.filter(function (p) { return p.status === 'completed'; }).length;
+                this._makeChart('statusChart', 'bar', ['Active', 'Completed'], [{ data: [active, done], backgroundColor: ['#b34a00', '#1f5e3a'] }]);
+                var monthly = {};
+                this.patients.forEach(function (p) { if (p.registrationDate) { var m = p.registrationDate.slice(0, 7); monthly[m] = (monthly[m] || 0) + 1; } });
+                var sorted = Object.keys(monthly).sort();
+                this._makeChart('trendsChart', 'line', sorted.length ? sorted : ['No Data'], [{ label: 'Visits', data: sorted.length ? sorted.map(function (m) { return monthly[m]; }) : [0], borderColor: '#004c97', tension: 0.3, fill: false }]);
+                var classes = {};
+                this.patients.forEach(function (p) { if (p.class) classes[p.class] = (classes[p.class] || 0) + 1; });
+                var clKeys = Object.keys(classes).length ? Object.keys(classes) : ['No Data'];
+                var clVals = Object.keys(classes).length ? Object.values(classes) : [1];
+                this._makeChart('classChart', 'pie', clKeys, [{ data: clVals, backgroundColor: COLORS }]);
+                var months = [], counts = [];
+                for (var i = 5; i >= 0; i--) { var d = new Date(); d.setMonth(d.getMonth() - i); var m = d.toISOString().slice(0, 7); months.push(m); var self = this; counts.push(this.patients.filter(function (p) { return p.registrationDate && p.registrationDate.startsWith(m); }).length); }
+                this._makeChart('monthlyCompChart', 'line', months, [{ label: 'New Cases', data: counts, borderColor: '#004c97', fill: false, tension: 0.3 }]);
+                this._makeChart('recoveryChart', 'doughnut', ['Active', 'Recovered'], [{ data: [active, done], backgroundColor: ['#b34a00', '#1f5e3a'] }]);
+            };
+
+            HealthcareSystem.prototype._importExcel = async function (file) {
+                var data = await file.arrayBuffer();
+                var wb = XLSX.read(new Uint8Array(data), { type: 'array', cellDates: true });
+                var sheet = wb.Sheets[wb.SheetNames[0]];
+                var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                var headers = rows[0] || [];
+                return rows.slice(1).filter(function (r) { return r.some(function (c) { return c; }); }).map(function (row, i) {
+                    var s = { importDate: new Date().toISOString() };
+                    headers.forEach(function (h, idx) {
+                        var k = (h || '').toString().trim().toLowerCase();
+                        var v = row[idx] ? row[idx].toString().trim() : '';
+                        if (k.includes('name')) s.name = v; else if (k.includes('class')) s.class = v; else if (k.includes('stream')) s.stream = v;
+                        else if (k.includes('age')) s.age = parseInt(v) || null; else if (k.includes('gender')) s.gender = v; else if (k.includes('contact')) s.contact = v;
+                    });
+                    return s;
+                }).filter(function (s) { return s.name; });
+            };
+
+            HealthcareSystem.prototype._importCsv = function (file) {
+                return new Promise(function (res, rej) {
+                    PapaParse.parse(file, {
+                        header: true, skipEmptyLines: true, complete: function (r) {
+                            try {
+                                res(r.data.map(function (row, i) {
+                                    var s = { importDate: new Date().toISOString() };
+                                    Object.keys(row).forEach(function (k) {
+                                        var nk = k.trim().toLowerCase(); var v = row[k] ? row[k].toString().trim() : '';
+                                        if (nk.includes('name')) s.name = v; else if (nk.includes('class')) s.class = v; else if (nk.includes('stream')) s.stream = v;
+                                        else if (nk.includes('age')) s.age = parseInt(v) || null; else if (nk.includes('gender')) s.gender = v; else if (nk.includes('contact')) s.contact = v;
+                                    });
+                                    return s;
+                                }).filter(function (s) { return s.name; }));
+                            } catch (e) { rej(e); }
+                        }, error: rej
+                    });
+                });
+            };
+
+            HealthcareSystem.prototype._handleImport = async function (file) {
+                var self = this;
+                var bar = document.getElementById('importBar');
+                var status = document.getElementById('importStatus');
+                document.getElementById('importProgress').style.display = 'block';
+                bar.style.width = '20%'; status.textContent = 'Reading file...';
+                try {
+                    var students = [];
+                    if (file.name.match(/\.(xlsx|xls|xlsm|ods)$/i)) { status.textContent = 'Processing Excel...'; bar.style.width = '50%'; students = await this._importExcel(file); }
+                    else if (file.name.endsWith('.csv')) { status.textContent = 'Processing CSV...'; bar.style.width = '50%'; students = await this._importCsv(file); }
+                    else throw new Error('Unsupported format. Use CSV or Excel.');
+                    bar.style.width = '80%'; status.textContent = 'Validating ' + students.length + ' records...';
+                    if (!students.length) throw new Error('No valid records found');
+                    this.studentDB = this.studentDB.concat(students);
+                    bar.style.width = '100%'; status.textContent = '✓ Imported ' + students.length + ' students!';
+                    this._refreshDatalist();
+                    await this._saveAll();
+                    setTimeout(function () { document.getElementById('importModal').classList.remove('show'); document.getElementById('importProgress').style.display = 'none'; }, 1500);
+                    showToast('Imported ' + students.length + ' students', 'success');
+                } catch (err) {
+                    status.textContent = '✗ ' + err.message; bar.style.width = '0%';
+                    showToast(err.message, 'error');
+                    setTimeout(function () { document.getElementById('importProgress').style.display = 'none'; }, 3000);
+                }
+            };
+
+            HealthcareSystem.prototype._refreshDatalist = function () {
+                var list = document.getElementById('studentList');
+                if (!list) return;
+                list.innerHTML = '';
+                this.studentDB.forEach(function (s) { if (s.name) { var o = document.createElement('option'); o.value = s.name; list.appendChild(o); } });
+            };
+
+            HealthcareSystem.prototype._exportData = function (type) {
+                var data = [], filename = '';
+                if (type === 'patients') { data = this.patients; filename = 'patients_' + todayStr() + '.xlsx'; }
+                else if (type === 'inventory') { data = this.inventory; filename = 'inventory_' + todayStr() + '.xlsx'; }
+                if (!data.length) { showToast('No data to export', 'warning'); return; }
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Sheet1');
+                XLSX.writeFile(wb, filename);
+                showToast('Export complete', 'success');
+            };
+
+            HealthcareSystem.prototype._exportFullReport = function () {
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.patients), 'Patients');
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.inventory), 'Inventory');
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(this.dispensing), 'Dispensing');
+                XLSX.writeFile(wb, 'pulse_report_' + todayStr() + '.xlsx');
+                showToast('Full report exported', 'success');
+            };
+
+            HealthcareSystem.prototype._backup = function () {
+                var data = { patients: this.patients, inventory: this.inventory, dispensing: this.dispensing, studentDB: this.studentDB, timestamp: new Date().toISOString() };
+                var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a'); a.href = url; a.download = 'pulse_backup_' + todayStr() + '.json'; a.click();
+                URL.revokeObjectURL(url);
+                document.getElementById('dbBackup').textContent = new Date().toLocaleString();
+                showToast('Database backed up', 'success');
+            };
+
+            HealthcareSystem.prototype._restore = function () {
+                var self = this;
+                var input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+                input.onchange = async function (e) {
+                    var file = e.target.files[0]; if (!file) return;
+                    var ok = await showConfirm('Restore Database', 'This will replace all current data with the backup. Continue?', '📂');
+                    if (!ok) return;
+                    showSpinner();
+                    var reader = new FileReader();
+                    reader.onload = async function (ev) {
+                        try {
+                            var bk = JSON.parse(ev.target.result);
+                            if (bk.patients) self.patients = bk.patients;
+                            if (bk.inventory) self.inventory = bk.inventory;
+                            if (bk.dispensing) self.dispensing = bk.dispensing;
+                            if (bk.studentDB) self.studentDB = bk.studentDB;
+                            await self._saveAll();
+                            self._refresh(); self._renderInventory(); self._renderDBView(); self._refreshDatalist();
+                            showToast('Database restored successfully', 'success');
+                        } catch (err) { showToast('Restore failed: ' + err.message, 'error'); }
+                        finally { hideSpinner(); }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            };
+
+            HealthcareSystem.prototype._optimize = async function () {
+                var ok = await showConfirm('Optimize Database', 'Remove duplicate records and trim dispensing log to last 500 entries?', '🧹');
+                if (!ok) return;
+                var seen = new Set();
+                this.patients = this.patients.filter(function (p) { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
+                if (this.dispensing.length > 500) this.dispensing = this.dispensing.slice(-500);
+                await this._saveAll();
+                this._refresh();
+                showToast('Database optimized', 'success');
+            };
+
+            HealthcareSystem.prototype._setupEvents = function () {
+                var self = this;
+
+                document.getElementById('themeToggle').addEventListener('click', function (e) {
+                    document.body.classList.toggle('dark');
+                    e.currentTarget.querySelector('i').className = document.body.classList.contains('dark') ? 'fas fa-moon' : 'fas fa-sun';
+                    self._updateAllCharts();
+                });
+
+                document.querySelectorAll('.nav-tab').forEach(function (tab) {
+                    tab.addEventListener('click', function () {
+                        document.querySelectorAll('.nav-tab').forEach(function (t) { t.classList.remove('active'); });
+                        tab.classList.add('active');
+                        document.querySelectorAll('.tab-pane').forEach(function (p) { p.classList.remove('active'); });
+                        var target = document.getElementById(tab.dataset.tab + '-tab');
+                        if (target) target.classList.add('active');
+                        if (tab.dataset.tab === 'statistics') self._updateAllCharts();
+                        if (tab.dataset.tab === 'database') self._renderDBView();
+                        if (tab.dataset.tab === 'inventory') self._renderInventory();
+                    });
+                });
+
+                document.getElementById('registerBtn').addEventListener('click', function () { self._registerPatient(); });
+                document.getElementById('addMedBtn').addEventListener('click', function () { self._addMedRow(); });
+                this._addMedRow();
+
+                document.getElementById('hasReferral').addEventListener('change', function (e) {
+                    document.getElementById('referralDetails').classList.toggle('open', e.target.checked);
+                });
+
+                document.getElementById('patientSearch').addEventListener('input', function (e) {
+                    self._renderPatientList(e.target.value);
+                });
+
+                document.getElementById('lookupBtn').addEventListener('click', function () {
+                    var q = document.getElementById('studentSearch').value.toLowerCase();
+                    var s = self.studentDB.find(function (x) { return x.name && x.name.toLowerCase().includes(q); });
+                    if (s) {
+                        document.getElementById('patientName').value = s.name || '';
+                        document.getElementById('patientClass').value = s.class || 'S.1';
+                        document.getElementById('patientStream').value = s.stream || 'East';
+                        document.getElementById('patientAge').value = s.age || '';
+                        document.getElementById('patientGender').value = s.gender || 'Male';
+                        document.getElementById('patientContact').value = s.contact || '';
+                        showToast('Loaded: ' + s.name, 'success');
+                    } else showToast('Student not found in database', 'warning');
+                });
+
+                document.getElementById('editPatientBtn').addEventListener('click', function (e) { self._openEditModal(e.currentTarget.dataset.id); });
+                document.getElementById('deletePatientBtn').addEventListener('click', function (e) { self._deletePatient(e.currentTarget.dataset.id); });
+                document.getElementById('markCompleteBtn').addEventListener('click', function (e) { self._markCompleted(e.currentTarget.dataset.id); });
+                document.getElementById('editSave').addEventListener('click', function () { self._saveEdit(); });
+                document.getElementById('editCancel').addEventListener('click', function () { document.getElementById('editModal').classList.remove('show'); });
+                document.getElementById('editAddMedBtn').addEventListener('click', function () { self._addEditMedRow(null); });
+
+                document.getElementById('addStockBtn').addEventListener('click', function () { self._showStockModal(); });
+                document.getElementById('stockSave').addEventListener('click', function () { self._saveStock(); });
+                document.getElementById('stockCancel').addEventListener('click', function () { document.getElementById('stockModal').classList.remove('show'); });
+
+                document.getElementById('importStudentsBtn').addEventListener('click', function () {
+                    document.getElementById('importFile').value = '';
+                    document.getElementById('importProgress').style.display = 'none';
+                    document.getElementById('importModal').classList.add('show');
+                });
+                document.getElementById('importCancel').addEventListener('click', function () { document.getElementById('importModal').classList.remove('show'); });
+                document.getElementById('importConfirm').addEventListener('click', function () {
+                    var file = document.getElementById('importFile').files[0];
+                    if (!file) { showToast('Please select a file', 'warning'); return; }
+                    self._handleImport(file);
+                });
+
+                document.getElementById('dbView').addEventListener('change', function () { self._renderDBView(); });
+                document.getElementById('backupBtn').addEventListener('click', function () { self._backup(); });
+                document.getElementById('restoreBtn').addEventListener('click', function () { self._restore(); });
+                document.getElementById('optimizeBtn').addEventListener('click', function () { self._optimize(); });
+
+                document.getElementById('exportPatientsBtn').addEventListener('click', function () { self._exportData('patients'); });
+                document.getElementById('exportInvBtn').addEventListener('click', function () { self._exportData('inventory'); });
+                document.getElementById('fullReportBtn').addEventListener('click', function () { self._exportFullReport(); });
+                document.getElementById('monthlyReportBtn').addEventListener('click', function () {
+                    var month = new Date().toISOString().slice(0, 7);
+                    var wb = XLSX.utils.book_new();
+                    var monthly = self.patients.filter(function (p) { return p.registrationDate && p.registrationDate.startsWith(month); });
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthly), 'Monthly');
+                    XLSX.writeFile(wb, 'report_' + month + '.xlsx');
+                    showToast('Monthly report exported', 'success');
+                });
+                document.getElementById('emailReportBtn').addEventListener('click', function () {
+                    var subj = encodeURIComponent('Pulse Jico Health Report');
+                    var body = encodeURIComponent('Patients: ' + self.patients.length + '\nActive: ' + self.patients.filter(function (p) { return p.status === 'active'; }).length + '\nRecovered: ' + self.patients.filter(function (p) { return p.status === 'completed'; }).length);
+                    window.location.href = 'mailto:?subject=' + subj + '&body=' + body;
+                });
+
+                // Event delegation for dynamic buttons
+                document.addEventListener('click', function (e) {
+                    var btn = e.target.closest('[data-action]');
+                    if (!btn) return;
+                    var action = btn.dataset.action, id = btn.dataset.id;
+                    if (action === 'view') self._showDetail(id);
+                    else if (action === 'delete') self._deletePatient(id);
+                    else if (action === 'editstock') self._showStockModal(parseInt(id));
+                    else if (action === 'dispense') self._dispenseStock(parseInt(id));
+                });
+
+                // Close modals on overlay click
+                ['stockModal', 'importModal', 'editModal'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    el.addEventListener('click', function (e) { if (e.target === el) el.classList.remove('show'); });
+                });
+            };
+
+        })();
+    </script>
+</body>
+
+</html>
